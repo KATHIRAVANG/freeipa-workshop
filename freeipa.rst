@@ -577,6 +577,65 @@ Now we can simply obtain keytabs for our HTTP service.
 
 ----
 
+Hostgroups
+----------
+
+- hostgroups are used for logical grouping of hosts
+- and to make assigning of RBAC and sudo rules easier
+- hostgroups can be nested
+
+.. code-block:: bash
+
+    ipa hostgroup-add --hosts=web01.fpy.vpc20.cloudlab.cz fpy-servers
+    ipa hostgroup-add --hosts=fpy-web.tcpcloud.eu fpy-servers
+
+----
+
+Role-Based Access Control
+-------------------------
+
+- RBAC rules define rules for access to hosts
+- eg. allow users in group ``admins`` access hosts in hostgroup
+  ``internal-systems`` via service ``sshd``
+
+  - such users will be allowed to login via SSH but not on console, via FTP,
+    etc.
+- service groups can be defined to include all services of the same type
+
+  - eg. ftp = vsftpd, pure-ftpd, etc.
+
+- FreeIPA web UI has awesome HBAC testing tool
+
+----
+
+Sudo rules
+----------
+
+- sudo rules define who can run which commands on which hosts and as which
+  user/group
+
+  - eg. allow users in group ``django-admins`` to execute ``/usr/bin/python``
+    as user ``www-data`` on hosts in hostgroup ``web-servers``
+
+- sudo command groups can be created to allow access to set of commands
+- options can be assigned to rules (eg. ``!authenticate``, ``requiretty``)
+
+----
+
+Next topics
+===========
+
+- DNS zones and records
+
+Advanced
+--------
+
+- Certificate management
+- FreeIPA roles, privileges and permissions
+- automount
+
+----
+
 Reference
 =========
 
