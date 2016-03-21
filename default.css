@@ -5,6 +5,12 @@ body {
     font-size: 1.4em;
 }
 
+tt {
+    color: #A7652F;
+    font-family: 'Source Code Pro', courier-new;
+    font-size: 0.85em;
+}
+
 pre {
     font-family: 'Source Code Pro', courier-new;
     font-size: 0.8em;
