@@ -384,8 +384,196 @@ DNS dynamic updates
 
 ----
 
+FreeIPA Client
+==============
+
+- based on standard protocols
+
+  - any LDAP/Kerberos enabled client can interoperate
+
+- additional features achieved by using **sssd**
+
+  - tends to be common framework for access to remote authentication and
+    identity resources
+  - provides caching and offline support
+
+    - yes, you can integrate your laptop with FreeIPA :-)
+
+  - provides `PAM
+    <https://en.wikipedia.org/wiki/Pluggable_authentication_module>`_
+    (Pluggable Authentication Module) and `NSS
+    <https://en.wikipedia.org/wiki/Name_Service_Switch>`_ (Name Service
+    Switch) modules
+
+----
+
+PAM Framework
+-------------
+
+.. image:: ./images/pam_architecture.gif
+   :align: center
+   :width: 100%
+
+----
+
+.. image:: ./images/nss_architecture.gif
+   :class: pull-right
+
+Name Service Switch
+-------------------
+
+- use ``getent`` to do NSS queries
+
+  - ``getent passwd admin``
+
+- configured in ``/etc/nsswitch.conf``
+
+  ::
+
+    passwd:         compat sss
+    group:          compat sss
+    shadow:         compat
+
+    hosts:          files dns
+    networks:       files
+    ...
+
+- See `nsswitch.conf
+  <http://man7.org/linux/man-pages/man5/nsswitch.conf.5.html#FILES>`_ man
+  page, FILES section for more informations
+
+----
+
+.. image:: ./images/ipa_architecture.png
+   :align: center
+   :width: 100%
+
+----
+
 FreeIPA Management
 ==================
+
+.. image:: ./images/ipa_server_management.png
+   :align: center
+   :width: 100%
+
+- directly by manipulating LDAP *(better don't)*
+- Web UI and `JSON-RPC
+  <https://vda.li/en/posts/2015/05/28/talking-to-freeipa-api-with-sessions/>`_
+- CLI and Python API
+
+----
+
+Example client
+--------------
+
+.. image:: ./images/ipa_client_principals.png
+   :align: center
+
+- Primary host: ``web01.fpy.vpc20.cloudlab.cz``
+- Other hosts: ``fpy-web.cloudlab.cz``
+- Webserver with GSSAPI support for both hosts
+
+  - ``HTTP/$(hostname -f)``
+  - ``HTTP/fpy-web.cloudlab.cz``
+
+----
+
+Add hosts
+~~~~~~~~~
+
+- create primary host
+
+  .. code-block:: bash
+
+      ipa host-add \
+        --force \
+        --password=cloudlab \
+        web01.fpy.vpc20.cloudlab.cz
+
+- create host for external access
+
+  .. code-block:: bash
+
+      ipa host-add --force fpy-web.tcpcloud.eu
+
+  - let it be managed by primary host
+
+    .. code-block:: bash
+
+      ipa host-add-managedby \
+        --hosts=web01.fpy.vpc20.cloudlab.cz \
+        fpy-web.tcpcloud.eu
+
+----
+
+Client join
+~~~~~~~~~~~
+
+- install ``freeipa-client``
+- join FreeIPA
+
+  .. code-block:: bash
+
+      ipa-client-install \
+        --server idm01.tcpcloud.eu \
+        --domain fpy.vpc20.cloudlab.cz \
+        --realm TCPCLOUD.EU \
+        --hostname web01.fpy.vpc20.cloudlab.cz \
+        -w cloudlab \
+        --mkhomedir --enable-dns-updates --unattended
+
+Since that, client is enrolled, can kinit and authenticate to other services
+(eg. to update DNS records, etc.)
+
+----
+
+Add services
+~~~~~~~~~~~~
+
+- create HTTP services for both hosts
+
+  .. code-block:: bash
+
+      ipa service-add --force HTTP/web01.fpy.vpc20.cloudlab.cz
+      ipa service-add --force HTTP/fpy-web.tcpcloud.eu
+
+- services are automatically managed by their hosts
+- we can also add management of external host to primary one
+
+   .. code-block:: bash
+
+       ipa service-add-host \
+         --hosts=web01.fpy.vpc20.cloudlab.cz \
+         fpy-web.tcpcloud.eu
+
+----
+
+Keytab for webserver
+~~~~~~~~~~~~~~~~~~~~
+
+Now we can simply obtain keytabs for our HTTP service.
+
+- first kinit as primary host
+
+  .. code-block:: bash
+
+      kinit -kt /etc/krb5.keytab host/web01.fpy.vpc20.cloudlab.cz
+
+- get keytab for HTTP service for both hosts
+
+  .. code-block:: bash
+
+      ipa-getkeytab \
+        -k /etc/apache2/krb5.keytab \
+        -s idm01.tcpcloud.eu \
+        -p HTTP/fpy-web.tcpcloud.eu
+
+- verify that you can kinit with newly obtained keytab
+
+  .. code-block:: bash
+
+      kinit -kt /etc/apache/krb5.keytab HTTP/fpy-web.tcpcloud.eu
 
 ----
 
