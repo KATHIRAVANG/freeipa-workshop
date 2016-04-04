@@ -68,7 +68,7 @@ LDAP
 
 ----
 
-``uid=admin,cn=users,cn=accounts,dc=tcpcloud,dc=eu``
+``uid=admin,cn=users,cn=accounts,dc=example,dc=com``
 
 ^- ``dn`` (distinquished name = absolute address) of admin user
 
@@ -82,13 +82,13 @@ LDAP
 
 .. code-block:: yaml
 
-    dn: uid=admin,cn=users,cn=accounts,dc=tcpcloud,dc=eu
+    dn: uid=admin,cn=users,cn=accounts,dc=example,dc=com
     krbLastSuccessfulAuth: 20160229111009Z
     krbLoginFailedCount: 0
     krbLastFailedAuth: 20160223145934Z
 
-    memberOf: cn=admins,cn=groups,cn=accounts,dc=tcpcloud,dc=eu
-    memberOf: cn=Replication Administrators,cn=privileges,cn=pbac,dc=tcpcloud,dc=eu
+    memberOf: cn=admins,cn=groups,cn=accounts,dc=example,dc=com
+    memberOf: cn=Replication Administrators,cn=privileges,cn=pbac,dc=example,dc=com
     ...
 
     objectClass: top
@@ -102,7 +102,7 @@ LDAP
     objectClass: ipaSshGroupOfPubKeys
 
     uid: admin
-    krbPrincipalName: admin@TCPCLOUD.EU
+    krbPrincipalName: admin@EXAMPLE.COM
     cn: Administrator
     sn: Administrator
     uidNumber: 96400000
@@ -122,10 +122,10 @@ LDAP client usage
 .. code-block:: bash
 
     ldapsearch \
-     -D uid=apache,cn=users,cn=accounts,dc=tcpcloud,dc=eu \  # Bind DN
+     -D uid=apache,cn=users,cn=accounts,dc=example,dc=com \  # Bind DN
      -w somersecretpassword \
-     -b dc=tcpcloud,dc=eu   \  # Base DN
-     -h idm01.tcpcloud.eu   \  # Host to bind
+     -b dc=example,dc=com   \  # Base DN
+     -h idm01.example.com   \  # Host to bind
      -ZZ \  # Use and enforce TLS (non-encrypted binds may be disabled)
      "(uid=admin)"  # Search expression
 
@@ -135,12 +135,12 @@ LDAP client usage
 
   .. code-block:: bash
 
-      kinit admin@TCPCLOUD.EU
+      kinit admin@EXAMPLE.COM
 
       ldapsearch \
         -Y GSSAPI \
-        -b dc=tcpcloud.eu    \
-        -h idm01.tcpcloud.eu \
+        -b dc=example.com    \
+        -h idm01.example.com \
         -ZZ \
         "(uid=admin)"
 
@@ -184,15 +184,15 @@ Architecture
 
   .. code-block:: bash
 
-      $ kinit filip.pytloun@TCPCLOUD.EU
-      Password for filip.pytloun@TCPCLOUD.EU:
+      $ kinit filip.pytloun@EXAMPLE.COM
+      Password for filip.pytloun@EXAMPLE.COM:
 
       $ klist
       Ticket cache: FILE:/tmp/krb5cc_1000
-      Default principal: filip.pytloun@TCPCLOUD.EU
+      Default principal: filip.pytloun@EXAMPLE.COM
 
       Valid starting       Expires              Service principal
-      03/01/2016 13:28:40  03/01/2016 23:28:40  krbtgt/TCPCLOUD.EU@TCPCLOUD.EU
+      03/01/2016 13:28:40  03/01/2016 23:28:40  krbtgt/EXAMPLE.COM@EXAMPLE.COM
       	renew until 03/02/2016 13:28:37
 
 ----
@@ -203,13 +203,13 @@ Architecture
 
   .. code-block:: bash
 
-      $ curl -q -u: --negotiate https://doc.tcpcloud.eu
+      $ curl -q -u: --negotiate https://doc.example.com
 
       $ klist
       ...
-      03/01/2016 13:33:34  03/01/2016 23:28:40  HTTP/doc.tcpcloud.eu@
+      03/01/2016 13:33:34  03/01/2016 23:28:40  HTTP/doc.example.com@
 	renew until 03/02/2016 13:28:37
-      03/01/2016 13:33:34  03/01/2016 23:28:40  HTTP/doc.tcpcloud.eu@TCPCLOUD.EU
+      03/01/2016 13:33:34  03/01/2016 23:28:40  HTTP/doc.example.com@EXAMPLE.COM
 	renew until 03/02/2016 13:28:37
 
 - KDC consists of 3 parts
@@ -233,9 +233,9 @@ Architecture
 
   - consists of 3 parts: ``username/instance@REALM``, eg.:
 
-    - ``admin@TCPCLOUD.EU``
-    - ``host/test.cloudlab.cz@TCPCLOUD.EU``
-    - ``HTTP/doc.tcpcloud.eu@TCPCLOUD.EU``
+    - ``admin@EXAMPLE.COM``
+    - ``host/test.cloudlab.cz@EXAMPLE.COM``
+    - ``HTTP/doc.example.com@EXAMPLE.COM``
 
 - **keytab** (key table) is a file containing long-term keys for service
 
@@ -251,7 +251,7 @@ Architecture
       Keytab name: FILE:/etc/apache2/ipa.keytab
       KVNO Timestamp           Principal
       ---- ------------------- ---------------------
-      1 01/28/2016 11:34:52 HTTP/jenkins.tcpcloud.eu@TCPCLOUD.EU
+      1 01/28/2016 11:34:52 HTTP/jenkins.example.com@EXAMPLE.COM
 
 ----
 
@@ -270,7 +270,7 @@ Example service - Apache
 
   .. code-block:: bash
 
-      ipa-getkeytab -k /etc/apache2/ipa.keytab -p HTTP/test.tcpcloud.eu -s idm01.tcpcloud.eu
+      ipa-getkeytab -k /etc/apache2/ipa.keytab -p HTTP/test.example.com -s idm01.example.com
       chown root:www-data /etc/apache2/ipa.keytab
       chmod 640 /etc/apache2/ipa.keytab
 
@@ -289,7 +289,7 @@ Example service - Apache
     # Cache credentials in case that negotiate is not supported
     KrbSaveCredentials on
     KrbServiceName HTTP
-    KrbAuthRealms TCPCLOUD.EU
+    KrbAuthRealms EXAMPLE.COM
     Krb5KeyTab /etc/apache2/ipa.keytab
 
 ----
@@ -301,10 +301,10 @@ Unfortunately it doesn't support GSSAPI LDAP bind so we need to use password.
 
 .. code-block:: apache
 
-  AuthLDAPBindDN "uid=apache,cn=users,cn=accounts,dc=tcpcloud,dc=eu
+  AuthLDAPBindDN "uid=apache,cn=users,cn=accounts,dc=example,dc=com
   AuthLDAPBindPassword secretpassword
-  AuthLDAPURL "ldaps://idm01.tcpcloud.eu idm02.tcpcloud.eu/dc=tcpcloud,dc=eu?krbPrincipalName"
-  Require ldap-attribute memberOf="cn=docs,cn=groups,cn=accounts,dc=tcpcloud,dc=eu"
+  AuthLDAPURL "ldaps://idm01.example.com idm02.example.com/dc=example,dc=com?krbPrincipalName"
+  Require ldap-attribute memberOf="cn=docs,cn=groups,cn=accounts,dc=example,dc=com"
 
 ----
 
@@ -343,12 +343,12 @@ DNS dynamic updates
 - policies for dynamic updates can be set per-zone
 
   - by default, principal can update record for itself (eg.
-    ``host/doc.tcpcloud.eu`` can set record ``doc`` in zone ``tcpcloud.eu``
+    ``host/doc.example.com`` can set record ``doc`` in zone ``example.com``
 - dynamic updates are disabled by default
 
   .. code-block:: bash
 
-      ipa dnszone-mod tcpcloud.eu --dynamic-update=1
+      ipa dnszone-mod example.com --dynamic-update=1
 
 ----
 
@@ -358,28 +358,28 @@ DNS dynamic updates
 
   # Set server, otherwise it will use NS records
   # (which may point only to DNS slaves)
-  server idm01.tcpcloud.eu
+  server idm01.example.com
   # First delete old records
-  update delete doc.tcpcloud.eu. IN A
-  update delete doc.tcpcloud.eu. IN AAAA
+  update delete doc.example.com. IN A
+  update delete doc.example.com. IN AAAA
   send
   # Also delete reverse record
   update delete 82.98.22.185.in-addr.arpa PTR
   send
 
   # Set A record for given zone
-  update add doc.tcpcloud.eu. 1800 IN A 185.22.98.82
+  update add doc.example.com. 1800 IN A 185.22.98.82
   send
   # ..and the same for reverse
-  update add 82.98.22.185.in-addr.arpa 1800 PTR doc.tcpcloud.eu
+  update add 82.98.22.185.in-addr.arpa 1800 PTR doc.example.com
   send
 
 - kinit and update zone
 
   .. code-block:: bash
 
-      kinit -kt /etc/krb5.keytab host/doc.tcpcloud.eu
-      nsupdate -g /etc/nsupdate-doc.tcpcloud.eu
+      kinit -kt /etc/krb5.keytab host/doc.example.com
+      nsupdate -g /etc/nsupdate-doc.example.com
       kdestroy
 
 ----
@@ -495,7 +495,7 @@ Add hosts
 
   .. code-block:: bash
 
-      ipa host-add --force fpy-web.tcpcloud.eu
+      ipa host-add --force fpy-web.example.com
 
   - let it be managed by primary host
 
@@ -503,7 +503,7 @@ Add hosts
 
       ipa host-add-managedby \
         --hosts=web01.fpy.vpc20.cloudlab.cz \
-        fpy-web.tcpcloud.eu
+        fpy-web.example.com
 
 ----
 
@@ -516,9 +516,9 @@ Client join
   .. code-block:: bash
 
       ipa-client-install \
-        --server idm01.tcpcloud.eu \
+        --server idm01.example.com \
         --domain fpy.vpc20.cloudlab.cz \
-        --realm TCPCLOUD.EU \
+        --realm EXAMPLE.COM \
         --hostname web01.fpy.vpc20.cloudlab.cz \
         -w cloudlab \
         --mkhomedir --enable-dns-updates --unattended
@@ -536,7 +536,7 @@ Add services
   .. code-block:: bash
 
       ipa service-add --force HTTP/web01.fpy.vpc20.cloudlab.cz
-      ipa service-add --force HTTP/fpy-web.tcpcloud.eu
+      ipa service-add --force HTTP/fpy-web.example.com
 
 - services are automatically managed by their hosts
 - we can also add management of external host to primary one
@@ -545,7 +545,7 @@ Add services
 
        ipa service-add-host \
          --hosts=web01.fpy.vpc20.cloudlab.cz \
-         fpy-web.tcpcloud.eu
+         fpy-web.example.com
 
 ----
 
@@ -566,14 +566,14 @@ Now we can simply obtain keytabs for our HTTP service.
 
       ipa-getkeytab \
         -k /etc/apache2/krb5.keytab \
-        -s idm01.tcpcloud.eu \
-        -p HTTP/fpy-web.tcpcloud.eu
+        -s idm01.example.com \
+        -p HTTP/fpy-web.example.com
 
 - verify that you can kinit with newly obtained keytab
 
   .. code-block:: bash
 
-      kinit -kt /etc/apache/krb5.keytab HTTP/fpy-web.tcpcloud.eu
+      kinit -kt /etc/apache/krb5.keytab HTTP/fpy-web.example.com
 
 ----
 
@@ -587,7 +587,7 @@ Hostgroups
 .. code-block:: bash
 
     ipa hostgroup-add --hosts=web01.fpy.vpc20.cloudlab.cz fpy-servers
-    ipa hostgroup-add --hosts=fpy-web.tcpcloud.eu fpy-servers
+    ipa hostgroup-add --hosts=fpy-web.example.com fpy-servers
 
 ----
 
